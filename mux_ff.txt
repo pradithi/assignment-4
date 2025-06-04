@@ -1,0 +1,23 @@
+module mux_dff (
+    input  logic clk,
+    input  logic rst,
+    input  logic S,
+    input  logic D,
+    output logic Q
+);
+    logic mux_out;
+
+    always_comb begin
+        if (S)
+            mux_out = D;
+        else
+            mux_out = Q;
+    end
+
+    always_ff @(posedge clk) begin
+        if (rst)
+            Q <= 0;
+        else
+            Q <= mux_out;
+    end
+endmodule

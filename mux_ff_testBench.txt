@@ -1,0 +1,52 @@
+`include "intf.sv"
+
+`include "driver.sv"
+`include "monitor.sv"
+
+module tb_mux_dff;
+    logic clk;
+    mux_if mif(clk);
+
+    Driver drv;
+    Monitor mon;
+
+    // Clock generation
+    initial clk = 0;
+    always #5 clk = ~clk;
+
+    // DUT instantiation
+    mux_dff dut (
+        .clk(clk),
+        .rst(mif.rst),
+        .S(mif.S),
+        .D(mif.D),
+        .Q(mif.Q)
+    );
+
+    // Dump file for waveform
+    initial begin
+        $dumpfile("dump.vcd");
+        $dumpvars(0, tb_mux_dff);
+    end
+
+    initial begin
+        drv = new(mif);
+        mon = new(mif);
+
+        // Reset DUT
+        drv.drive(1, 0, 0); @(posedge clk); mon.monitor_output();
+
+        // Remove reset and test S=1 (load new value)
+        drv.drive(0, 1, 1); @(posedge clk); mon.monitor_output();
+        drv.drive(0, 1, 0); @(posedge clk); mon.monitor_output();
+
+        // S=0 (retain old value)
+        drv.drive(0, 0, 1); @(posedge clk); mon.monitor_output();
+
+        // More toggling
+        drv.drive(0, 1, 1); @(posedge clk); mon.monitor_output();
+        drv.drive(0, 0, 0); @(posedge clk); mon.monitor_output();
+
+        $finish;
+    end
+endmodule
